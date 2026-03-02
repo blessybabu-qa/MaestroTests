@@ -3,10 +3,7 @@ name: Maestro Scheduled UI Tests
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   schedule:
-    # Runs at 01:00 UTC every day
     - cron: '0 1 * * *'
   workflow_dispatch: 
 
@@ -18,15 +15,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: 'gradle'
-
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
+      # Removed Java & Build steps because this repo only contains Maestro flows
+      # If you have an APK file in this repo, ensure the path below is correct.
 
       - name: Install Maestro
         run: |
@@ -38,27 +28,27 @@ jobs:
         with:
           api-level: 30
           target: google_apis
+          # FIX: Matches the aarch64 (Apple Silicon) host architecture
           arch: arm64-v8a
           profile: pixel_6
           script: |
-            # Install the APK
-            adb install app/build/outputs/apk/debug/app-debug.apk
+            # 1. Provide the path to your APK. 
+            # If it's not in the repo, you may need to download it from a URL or previous build
+            # adb install path/to/your/app.apk 
             
-            # Use the exact secret names from your repository settings
+            # 2. Run your main test flow from your 'flows' folder
             maestro test \
               -e USER_NAME="${{ secrets.USER_NAME }}" \
               -e USER_PWD="${{ secrets.USER_PWD }}" \
               --format junit \
               --output report.xml \
-              .maestro/your_flow.yaml
+              flows/mydemoapp_test.yaml
 
       - name: Upload Test Report & Screenshots
         if: always() 
         uses: actions/upload-artifact@v4
         with:
-          name: maestro-failure-results
+          name: maestro-results
           path: |
             report.xml
             ~/.maestro/tests/
-          # Retention period can be added to save storage
-          retention-days: 7
