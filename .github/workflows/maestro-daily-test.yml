@@ -8,10 +8,11 @@ on:
   schedule:
     # Runs at 01:00 UTC every day
     - cron: '0 1 * * *'
+  workflow_dispatch: 
 
 jobs:
   maestro-test:
-    runs-on: macos-latest
+    runs-on: macos-latest 
     
     steps:
       - name: Checkout code
@@ -22,6 +23,10 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
 
       - name: Install Maestro
         run: |
@@ -31,27 +36,29 @@ jobs:
       - name: Run Maestro Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 29
+          api-level: 30
           target: google_apis
-          arch: x86_64
+          arch: arm64-v8a
+          profile: pixel_6
           script: |
-            # Install your app
+            # Install the APK
             adb install app/build/outputs/apk/debug/app-debug.apk
             
-            # Run Maestro with Secrets passed as env variables
-            # --format junit generates a detailed XML report for the summary
+            # Use the exact secret names from your repository settings
             maestro test \
-              -e USERNAME="${{ secrets.MAESTRO_USERNAME }}" \
-              -e PASSWORD="${{ secrets.MAESTRO_PASSWORD }}" \
+              -e USER_NAME="${{ secrets.USER_NAME }}" \
+              -e USER_PWD="${{ secrets.USER_PWD }}" \
               --format junit \
               --output report.xml \
               .maestro/your_flow.yaml
 
-      - name: Upload Test Report and Screenshots
-        if: always() # Ensures reports are uploaded even if tests fail
+      - name: Upload Test Report & Screenshots
+        if: always() 
         uses: actions/upload-artifact@v4
         with:
-          name: maestro-test-artifacts
+          name: maestro-failure-results
           path: |
             report.xml
             ~/.maestro/tests/
+          # Retention period can be added to save storage
+          retention-days: 7
