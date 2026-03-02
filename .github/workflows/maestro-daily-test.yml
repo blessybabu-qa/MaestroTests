@@ -1,337 +1,57 @@
-name: Maestro Daily Test Suite
+name: Maestro Scheduled UI Tests
 
 on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
   schedule:
-    # Run every day at 1 AM UTC (adjust timezone if needed)
+    # Runs at 01:00 UTC every day
     - cron: '0 1 * * *'
-
-  # Allow manual trigger from GitHub Actions tab
-  workflow_dispatch:
 
 jobs:
   maestro-test:
-    name: Run Maestro Tests
-    runs-on: ubuntu-latest
-
-    env:
-      USER_NAME: ${{ secrets.USER_NAME }}
-      USER_PWD: ${{ secrets.USER_PWD }}
-      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-      MAESTRO_LOGS_DIR: maestro-logs
-
+    runs-on: macos-latest
+    
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
           java-version: '17'
+          distribution: 'temurin'
 
       - name: Install Maestro
         run: |
-          curl -Ls "https://get.maestro.mobile/release/latest/maestro-cli" | bash
-          export PATH="$PATH:$HOME/.maestro/bin"
-          maestro --version
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
-      - name: Create Logs Directory
-        run: mkdir -p ${{ env.MAESTRO_LOGS_DIR }}
+      - name: Run Maestro Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          target: google_apis
+          arch: x86_64
+          script: |
+            # Install your app
+            adb install app/build/outputs/apk/debug/app-debug.apk
+            
+            # Run Maestro with Secrets passed as env variables
+            # --format junit generates a detailed XML report for the summary
+            maestro test \
+              -e USERNAME="${{ secrets.MAESTRO_USERNAME }}" \
+              -e PASSWORD="${{ secrets.MAESTRO_PASSWORD }}" \
+              --format junit \
+              --output report.xml \
+              .maestro/your_flow.yaml
 
-      - name: Run Maestro Test Suite
-        id: maestro-run
-        continue-on-error: true
-        run: |
-          export PATH="$PATH:$HOME/.maestro/bin"
-
-          # Run the main test flow with output directory for artifacts
-          maestro test flows/sauce_test.yaml \
-            --output ${{ env.MAESTRO_LOGS_DIR }}/maestro-output.xml \
-            --verbose \
-            2>&1 | tee ${{ env.MAESTRO_LOGS_DIR }}/maestro-console.log
-
-          # Capture exit code
-          echo "exit_code=$?" >> $GITHUB_OUTPUT
-
-      - name: Generate Enhanced HTML Report with Screenshots
-        if: always()
-        run: |
-          cat > ${{ env.MAESTRO_LOGS_DIR }}/test-report.html << 'EOF'
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Maestro Test Report - ${{ github.run_id }}</title>
-            <style>
-              * { margin: 0; padding: 0; box-sizing: border-box; }
-              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
-              .container { max-width: 1200px; margin: 0 auto; }
-              .header { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-              .header h1 { color: #2c3e50; margin-bottom: 10px; }
-              .header-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
-              .meta-item { background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #667eea; }
-              .meta-label { font-weight: bold; color: #2c3e50; font-size: 12px; text-transform: uppercase; }
-              .meta-value { color: #555; font-size: 16px; margin-top: 5px; }
-              .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; }
-              .status-pass { background: #d5f4e6; color: #27ae60; }
-              .status-fail { background: #fadbd8; color: #e74c3c; }
-              .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
-              .card h2 { color: #2c3e50; margin-bottom: 15px; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
-              .section-list { list-style: none; }
-              .section-list li { padding: 10px 0; border-bottom: 1px solid #ecf0f1; display: flex; align-items: center; }
-              .section-list li:before { content: "✓"; color: #27ae60; font-weight: bold; margin-right: 10px; font-size: 18px; }
-              .log-container { background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 5px; overflow-x: auto; max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
-              .failure-section { background: #fadbd8; border-left: 4px solid #e74c3c; padding: 15px; border-radius: 5px; margin-bottom: 15px; }
-              .failure-section h3 { color: #c0392b; margin-bottom: 10px; }
-              .screenshot-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 15px; }
-              .screenshot { border: 2px solid #ecf0f1; border-radius: 5px; overflow: hidden; background: #f8f9fa; }
-              .screenshot img { width: 100%; height: auto; display: block; }
-              .screenshot-caption { padding: 10px; background: #f8f9fa; font-size: 12px; color: #555; }
-              .timestamp { color: #7f8c8d; font-size: 13px; }
-              table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-              th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ecf0f1; }
-              th { background: #f8f9fa; font-weight: bold; color: #2c3e50; }
-              tr:hover { background: #f8f9fa; }
-              .footer { text-align: center; padding: 20px; color: #7f8c8d; font-size: 12px; border-top: 1px solid #ecf0f1; margin-top: 30px; }
-              .artifacts-list { background: #ecf0f1; padding: 15px; border-radius: 5px; margin-top: 15px; }
-              .artifact-item { padding: 8px 0; display: flex; align-items: center; }
-              .artifact-item:before { content: "📄"; margin-right: 10px; }
-              .progress-bar { background: #ecf0f1; border-radius: 20px; height: 8px; overflow: hidden; margin: 10px 0; }
-              .progress-fill { background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; width: 0%; }
-              @media print { body { background: white; } .container { max-width: 100%; } }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <div>
-                    <h1>🧪 Maestro Test Report</h1>
-                    <p class="timestamp">Generated: $(date '+%Y-%m-%d %H:%M:%S UTC')</p>
-                  </div>
-                  <div id="status-badge" class="status-badge status-pass">PASSED</div>
-                </div>
-                <div class="header-meta">
-                  <div class="meta-item">
-                    <div class="meta-label">Repository</div>
-                    <div class="meta-value">${{ github.repository }}</div>
-                  </div>
-                  <div class="meta-item">
-                    <div class="meta-label">Workflow Run</div>
-                    <div class="meta-value">#${{ github.run_id }}</div>
-                  </div>
-                  <div class="meta-item">
-                    <div class="meta-label">Branch</div>
-                    <div class="meta-value">${{ github.ref_name }}</div>
-                  </div>
-                  <div class="meta-item">
-                    <div class="meta-label">Environment</div>
-                    <div class="meta-value">Ubuntu Latest</div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="card">
-                <h2>📋 Test Execution Summary</h2>
-                <table>
-                  <tr>
-                    <th>Property</th>
-                    <th>Value</th>
-                  </tr>
-                  <tr>
-                    <td>Test Framework</td>
-                    <td>Maestro</td>
-                  </tr>
-                  <tr>
-                    <td>Target App</td>
-                    <td>com.saucelabs.mydemoapp.android</td>
-                  </tr>
-                  <tr>
-                    <td>Test Type</td>
-                    <td>End-to-End Mobile UI Testing</td>
-                  </tr>
-                  <tr>
-                    <td>Total Subflows</td>
-                    <td>9</td>
-                  </tr>
-                  <tr>
-                    <td>Execution Duration</td>
-                    <td>Varies (typically 5-10 minutes)</td>
-                  </tr>
-                  <tr>
-                    <td>Screenshot Capture</td>
-                    <td>On Failure Only</td>
-                  </tr>
-                </table>
-              </div>
-
-              <div class="card">
-                <h2>✅ Subflows Executed</h2>
-                <ol class="section-list">
-                  <li>Launch - App initialization and permissions</li>
-                  <li>Select Random Product - Product catalog browsing</li>
-                  <li>Add to Cart - Shopping cart operations</li>
-                  <li>Verify Cart Content - Cart review and checkout navigation</li>
-                  <li>Login - User authentication with credentials from GitHub secrets</li>
-                  <li>Checkout - Shipping address entry and validation</li>
-                  <li>Payment - Payment details and card number formatting (with space handling)</li>
-                  <li>Review Order - Order review with payment/shipping verification</li>
-                  <li>Checkout Complete - Order confirmation and completion</li>
-                </ol>
-              </div>
-
-              <div class="card" id="failure-details" style="display:none;">
-                <h2>❌ Failure Details</h2>
-                <div class="failure-section">
-                  <h3>Test Execution Failed</h3>
-                  <p>One or more test steps failed. Review the screenshots and logs below for details.</p>
-                  <div id="screenshot-gallery" class="screenshot-gallery"></div>
-                </div>
-              </div>
-
-              <div class="card">
-                <h2>📊 Key Test Points Verified</h2>
-                <ul class="section-list">
-                  <li>✓ Card number spacing regex validation (matches XXXX XXXX XXXX XXXX format)</li>
-                  <li>✓ Shipping address data persistence across flows</li>
-                  <li>✓ Payment method scrolling (scroll to arrivalTV element)</li>
-                  <li>✓ Login credentials from GitHub secrets (USER_NAME, USER_PWD)</li>
-                  <li>✓ Order confirmation message validation</li>
-                  <li>✓ End-to-end transaction flow completion</li>
-                  <li>✓ Random data generation (names, addresses, payment details)</li>
-                </ul>
-              </div>
-
-              <div class="card">
-                <h2>📜 Console Output</h2>
-                <div class="log-container" id="console-log">Loading console logs...</div>
-              </div>
-
-              <div class="card">
-                <h2>📦 Artifacts & Reports</h2>
-                <div class="artifacts-list">
-                  <div class="artifact-item">maestro-console.log - Full console output and test logs</div>
-                  <div class="artifact-item">maestro-output.xml - Test results in XML format for CI/CD</div>
-                  <div class="artifact-item">Screenshots directory - Failure screenshots (if applicable)</div>
-                  <div class="artifact-item">test-report.html - This interactive HTML report</div>
-                </div>
-              </div>
-
-              <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                <h3 style="color: #2c3e50; margin-bottom: 15px;">📖 View Logs</h3>
-                <p><a href="maestro-console.log" style="color: #667eea; text-decoration: none; font-weight: bold;">Download Full Console Log →</a></p>
-              </div>
-
-              <div class="footer">
-                <p>This report was automatically generated by GitHub Actions</p>
-                <p style="margin-top: 10px;">View workflow details: <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" style="color: #667eea;">Workflow Run #${{ github.run_id }}</a></p>
-              </div>
-            </div>
-
-            <script>
-              // Load console logs
-              fetch('maestro-console.log')
-                .then(response => response.text())
-                .then(data => {
-                  const logElement = document.getElementById('console-log');
-                  logElement.textContent = data.substring(0, 5000); // Show first 5000 chars
-                  if (data.length > 5000) {
-                    logElement.textContent += '\n\n... (truncated - view full log in artifacts)';
-                  }
-                })
-                .catch(err => {
-                  document.getElementById('console-log').textContent = 'Console log not available.';
-                });
-
-              // Check for failure
-              const failureStatus = ${{ steps.maestro-run.outputs.exit_code }};
-              if (failureStatus !== 0) {
-                document.getElementById('status-badge').textContent = 'FAILED';
-                document.getElementById('status-badge').className = 'status-badge status-fail';
-                document.getElementById('failure-details').style.display = 'block';
-              }
-            </script>
-          </body>
-          </html>
-          EOF
-
-      - name: Collect Failure Screenshots
-        if: steps.maestro-run.outputs.exit_code != '0'
-        continue-on-error: true
-        run: |
-          # Create screenshots directory
-          mkdir -p ${{ env.MAESTRO_LOGS_DIR }}/screenshots
-
-          # Look for screenshots in Maestro output
-          if [ -d "$HOME/.maestro" ]; then
-            find "$HOME/.maestro" -name "*.png" -type f -exec cp {} ${{ env.MAESTRO_LOGS_DIR }}/screenshots/ \; 2>/dev/null || true
-            find "$HOME/.maestro" -name "*.jpg" -type f -exec cp {} ${{ env.MAESTRO_LOGS_DIR }}/screenshots/ \; 2>/dev/null || true
-          fi
-
-          # Create failure report with screenshots
-          if [ -d "${{ env.MAESTRO_LOGS_DIR }}/screenshots" ] && [ "$(ls -A ${{ env.MAESTRO_LOGS_DIR }}/screenshots)" ]; then
-            echo "📸 Screenshots collected from test failure"
-            ls -lah ${{ env.MAESTRO_LOGS_DIR }}/screenshots/
-          else
-            echo "⚠️ No screenshots found (this is normal for some failures)"
-          fi
-
-      - name: Summary - Test Success ✓
-        if: steps.maestro-run.outputs.exit_code == '0'
-        run: |
-          echo "## ✅ Maestro Tests Passed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "All test flows executed successfully!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Executed Flows:" >> $GITHUB_STEP_SUMMARY
-          echo "- Launch" >> $GITHUB_STEP_SUMMARY
-          echo "- Select Random Product" >> $GITHUB_STEP_SUMMARY
-          echo "- Add to Cart" >> $GITHUB_STEP_SUMMARY
-          echo "- Verify Cart Content" >> $GITHUB_STEP_SUMMARY
-          echo "- Login (with USER_NAME & USER_PWD from GitHub secrets)" >> $GITHUB_STEP_SUMMARY
-          echo "- Checkout" >> $GITHUB_STEP_SUMMARY
-          echo "- Payment" >> $GITHUB_STEP_SUMMARY
-          echo "- Review Order" >> $GITHUB_STEP_SUMMARY
-          echo "- Checkout Complete" >> $GITHUB_STEP_SUMMARY
-
-      - name: Summary - Test Failure ✗
-        if: steps.maestro-run.outputs.exit_code != '0'
-        run: |
-          echo "## ❌ Maestro Tests Failed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "One or more test flows failed. Check the logs below." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Issue Details:" >> $GITHUB_STEP_SUMMARY
-          echo "Review the maestro-console.log in artifacts for detailed error information." >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload Test Artifacts
-        if: always()
+      - name: Upload Test Report and Screenshots
+        if: always() # Ensures reports are uploaded even if tests fail
         uses: actions/upload-artifact@v4
         with:
-          name: maestro-test-results
-          path: ${{ env.MAESTRO_LOGS_DIR }}/
-          retention-days: 30
-          if-no-files-found: warn
-
-      - name: Print Final Status
-        if: always()
-        run: |
-          echo "=== Test Execution Complete ==="
-          echo "Exit Code: ${{ steps.maestro-run.outputs.exit_code }}"
-          echo "Timestamp: $(date)"
-          echo "Reports available in artifacts"
-
-  notify-failure:
-    name: Notify on Failure
-    runs-on: ubuntu-latest
-    needs: maestro-test
-    if: failure()
-
-    steps:
-      - name: Send Failure Notification
-        run: |
-          echo "🚨 Maestro daily test suite failed!"
-          echo "Repository: ${{ github.repository }}"
-          echo "Workflow: ${{ github.workflow }}"
-          echo "Check the GitHub Actions logs for details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          name: maestro-test-artifacts
+          path: |
+            report.xml
+            ~/.maestro/tests/
