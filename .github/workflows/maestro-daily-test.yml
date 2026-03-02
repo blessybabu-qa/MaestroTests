@@ -26,9 +26,13 @@ jobs:
         with:
           api-level: 30
           target: google_apis
-          # FIX: Matches the Apple Silicon runner to prevent the 'FATAL' error
           arch: arm64-v8a
           profile: pixel_6
+          
+          force-avd-creation: false
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+        
           script: |
             # 1. Download the Sauce Labs My Demo App APK automatically
             curl -L "https://github.com/saucelabs/my-demo-app-android/releases/download/2.0.1/mda-2.0.1-22.apk" -o mydemoapp.apk
