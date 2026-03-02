@@ -4,6 +4,7 @@ on:
   push:
     branches: [ main ]
   schedule:
+    # Runs at 01:00 UTC every day
     - cron: '0 1 * * *'
   workflow_dispatch: 
 
@@ -15,9 +16,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Removed Java & Build steps because this repo only contains Maestro flows
-      # If you have an APK file in this repo, ensure the path below is correct.
-
       - name: Install Maestro
         run: |
           curl -Ls "https://get.maestro.mobile.dev" | bash
@@ -28,15 +26,17 @@ jobs:
         with:
           api-level: 30
           target: google_apis
-          # FIX: Matches the aarch64 (Apple Silicon) host architecture
+          # FIX: Matches the Apple Silicon runner to prevent the 'FATAL' error
           arch: arm64-v8a
           profile: pixel_6
           script: |
-            # 1. Provide the path to your APK. 
-            # If it's not in the repo, you may need to download it from a URL or previous build
-            # adb install path/to/your/app.apk 
+            # 1. Download the Sauce Labs My Demo App APK automatically
+            curl -L "https://github.com/saucelabs/my-demo-app-android/releases/download/2.0.1/mda-2.0.1-22.apk" -o mydemoapp.apk
             
-            # 2. Run your main test flow from your 'flows' folder
+            # 2. Install it
+            adb install mydemoapp.apk
+            
+            # 3. Run your specific test file
             maestro test \
               -e USER_NAME="${{ secrets.USER_NAME }}" \
               -e USER_PWD="${{ secrets.USER_PWD }}" \
