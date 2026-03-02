@@ -1,0 +1,40 @@
+appId: com.saucelabs.mydemoapp.android
+---
+# step 1: Verifying the payment page and generating new card data
+- assertVisible: "Checkout"
+- evalScript: 
+    // 1. Generate card number
+    ${output.thisCardNumber = "4" + faker.expression("#{numerify '###############'}")}
+    // 2. Generate 3-digit CVV
+    ${output.thisCvv = faker.expression("#{numerify '###'}")}
+
+    // 3. Generate Expiry (MM/YY)
+    ${output.thisExpiry = ("0" + (Math.floor(Math.random() * 12) + 1)).slice(-2) + "/" + (new Date().getFullYear() + 3).toString().substring(2)}
+
+# step 2: Giving the card details
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/nameET"
+- inputText: ${output.thisName} # Using your previously generated name
+
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/cardNumberET"
+- inputText: ${output.thisCardNumber}
+
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/expirationDateET"
+- inputText: ${output.thisExpiry}
+- hideKeyboard
+
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/securityCodeET"
+- inputText: ${output.thisCvv}
+- hideKeyboard
+
+# step 3: Clicking the confirm box of billing address
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/billingAddressCB"
+    checked: false
+    optional: true # Prevents failure if already checked
+
+# step 4: Clicking the review order button  
+- tapOn: "Review Order"

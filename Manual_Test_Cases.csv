@@ -1,0 +1,110 @@
+Subflow,Test Case ID,Test Case Name,Precondition,Steps,Expected Result,Status,Notes
+Launch,TC_LAUNCH_001,Verify App Launches Successfully,"App is installed on device, Device is switched on.","1. Tap the app icon
+2. Wait for app to load
+3. Verify home screen appears","App launches successfully and displays home screen. No error messages.","",Can be executed on Android device/emulator
+Launch,TC_LAUNCH_002,Verify App Permissions,"Android device with app installed","1. Open app for first time
+2. Check if permission requests appear
+3. Grant required permissions
+4. Verify app continues loading","App requests necessary permissions (camera, storage if needed). Permissions are granted. App loads without interruption.","",Check device Android version for permission behavior
+Select Random Product,TC_PRODUCT_001,Select Product from Catalog,"App is launched, Home screen is visible.","1. Navigate to Products/Shop section
+2. Scroll through products
+3. Tap on any product to view details
+4. Verify product details are displayed","Product details page is displayed with product name, description, price, and image.","","Verify multiple products can be selected"
+Select Random Product,TC_PRODUCT_002,Verify Product Information,"Product list is visible","1. Select a random product
+2. Check product name is displayed
+3. Check product price is displayed
+4. Check product image is displayed
+5. Check product description is visible","All product information (name, price, image, description) is correctly displayed.","","Test with multiple products"
+Add to Cart,TC_CART_001,Add Product to Cart,"Product details page is displayed","1. Tap the Add to Cart button
+2. Wait for confirmation message
+3. Verify cart icon shows updated count","Product is successfully added to cart. Cart count increases by 1. Success message is displayed.","","Verify quantity field if available"
+Add to Cart,TC_CART_002,Add Multiple Products,"App is on product browsing page","1. Select and add product 1
+2. Select and add product 2
+3. Select and add product 3
+4. Check cart icon count","Cart icon displays total of 3 items. All products are added successfully.","","Verify cart maintains all products"
+Verify Cart Content,TC_VERIFYCART_001,Open and View Cart,"Products are added to cart","1. Tap on cart icon
+2. Verify My Cart screen appears
+3. Verify all added products are displayed
+4. Verify prices are visible","Cart screen opens successfully. All added products are listed with quantities and prices.","",
+Verify Cart Content,TC_VERIFYCART_002,Verify Proceed to Checkout,"Products are in cart and cart screen is visible","1. View the cart contents
+2. Verify Proceed To Checkout button is visible
+3. Tap on Proceed To Checkout button","Proceed To Checkout button is visible. Clicking it navigates to the checkout/payment page.","",Verify no errors on navigation
+Login,TC_LOGIN_001,Login with Valid Credentials,"User is on login screen","1. Tap on username/email field
+2. Enter 'bod@example.com'
+3. Tap on password field
+4. Enter '10203040'
+5. Tap Login button","Login is successful. User is authenticated. Logout option is visible in menu.","","Verify user session is established"
+Login,TC_LOGIN_002,Verify Logout Option,"User is logged in successfully","1. Tap menu icon
+2. Verify Logout option appears
+3. Verify user is still on the page","Logout option is visible in the menu, confirming user is logged in.","",Verify user details are displayed
+Login,TC_LOGIN_003,Invalid Credentials Handling,"User is on login screen","1. Tap on username field
+2. Enter invalid email
+3. Tap on password field
+4. Enter invalid password
+5. Tap Login button","Error message is displayed. User is not logged in. Stays on login screen.","",Vary invalid input types
+Checkout,TC_CHECKOUT_001,Enter Shipping Address,"User is on checkout page after cart verification","1. Verify Shipping Address section
+2. Enter Full Name (random generated)
+3. Enter Address 1
+4. Enter Address 2 (apartment)
+5. Enter City
+6. Enter Zip Code
+7. Enter Country
+8. Verify all fields are populated","All shipping address fields are successfully populated with generated data. Fields display entered values.","",Data is randomly generated per test run
+Checkout,TC_CHECKOUT_002,Verify Address Data Persistence,"Shipping address is entered","1. Enter all address fields
+2. Proceed to next section
+3. Return to checkout
+4. Verify address data is retained","All previously entered address data is retained and displayed correctly.","","Test navigation back and forth"
+Checkout,TC_CHECKOUT_003,Continue to Payment,"Shipping address is fully entered","1. Verify all required address fields are filled
+2. Tap Continue or Next button
+3. Verify navigation to payment section","Navigation to payment section is successful. Shipping address section shows as reviewed.","",Verify fields are required before proceeding
+Payment,TC_PAYMENT_001,Generate and Enter Card Details,"User is on payment screen","1. Payment page loads
+2. Card number is generated (starts with 4, 16 digits total)
+3. Cardholder name is auto-filled (from shipping)
+4. Expiry date is generated (MM/YY format, future date)
+5. CVV is generated (3 random digits)","All payment fields are populated:
+- Card number: 16 digits starting with 4
+- Cardholder name: matches shipping name
+- Expiry date: valid future date in MM/YY format
+- CVV: 3 digits","",Data generation uses faker library
+Payment,TC_PAYMENT_002,Verify Payment Data Entry,"Payment fields are populated","1. Tap on card number field
+2. Verify generated card number is displayed
+3. Verify cardholder name field shows name
+4. Verify expiry date is in correct format
+5. Verify CVV field displays 3 digits","All payment fields display correctly generated data without errors.","",Verify field formatting
+Payment,TC_PAYMENT_003,Billing Address Checkbox,"Payment details are entered","1. Locate billing address checkbox
+2. Verify checkbox is available
+3. Check/uncheck as needed
+4. Proceed to review","Billing address checkbox functions correctly. Can toggle between checked and unchecked states.","",Verify optional checkbox behavior
+Payment,TC_PAYMENT_004,Navigate to Review Order,"All payment details are entered","1. Verify all payment fields are populated
+2. Tap Review Order button
+3. Verify navigation to review page","Navigation to review order page is successful. Payment details are passed forward.","",Verify data integrity during transition
+Review Order,TC_REVIEW_001,Verify Shipping Details on Review Page,"User is on review order page","1. Verify Review your order header is displayed
+2. Check shipping name is visible
+3. Check address line 1 is visible
+4. Check city is visible
+5. Check country is visible
+6. Check zip code is visible","All shipping information from the checkout step is correctly displayed on review page.","",Verify all address components visible
+Review Order,TC_REVIEW_002,Verify Payment Details on Review Page,"Review order page is displayed","1. Scroll down to Payment Method section
+2. Verify card number is visible (with spaces: XXXX XXXX XXXX XXXX format)
+3. Verify expiry date is displayed
+4. Verify cardholder name matches shipping name","Payment Method section shows:
+- Card number formatted with spaces every 4 digits
+- Expiry date in MM/YY format
+- Correct cardholder name","",Regex pattern handles space formatting
+Review Order,TC_REVIEW_003,Place Order Button Visibility,"All order details are reviewed","1. Verify all address information is visible
+2. Verify all payment information is visible
+3. Tap to scroll down if needed
+4. Verify Place Order button is visible","Place Order button is clearly visible and accessible. All order details are confirmed.","",Verify button is clickable
+Review Order,TC_REVIEW_004,Submit Order,"All review details are verified and button is visible","1. Click on Place Order button
+2. Wait for processing
+3. Verify navigation to checkout complete page","Order is successfully submitted. Navigation to checkout complete page occurs without errors.","",Monitor transaction processing
+Checkout Complete,TC_COMPLETE_001,Verify Checkout Complete Message,"Order is submitted and page loads","1. Verify Checkout Complete header is displayed
+2. Verify Thank you for your order message is shown","Checkout Complete screen displays both:
+- Checkout Complete header
+- Thank you for your order message","",Confirm successful order placement
+Checkout Complete,TC_COMPLETE_002,Verify Order Confirmation,"Checkout complete page is displayed","1. Check if order confirmation details are visible
+2. Check if order number is displayed (if applicable)
+3. Verify thank you message is clear","Order confirmation is properly displayed. Thank you message is clear to user.","",Verify order number visibility if available
+Checkout Complete,TC_COMPLETE_003,End to End Flow Completion,"User completes entire checkout process","1. Verify app returns to home or orders screen
+2. Verify Cart is reset or cleared
+3. Verify user can start another transaction if needed","Full end-to-end transaction is completed successfully. App is ready for next action.","",Test multiple transactions in sequence

@@ -1,0 +1,5 @@
+appId: com.saucelabs.mydemoapp.android
+---
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/productIV"
+    index: ${Math.floor(Math.random() * 3)}

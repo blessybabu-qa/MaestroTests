@@ -1,0 +1,8 @@
+# subflows/verify_cart_contents.yaml
+appId: com.saucelabs.mydemoapp.android
+---
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/cartIV"
+- assertVisible: "My Cart"
+- tapOn: "Proceed To Checkout"
+

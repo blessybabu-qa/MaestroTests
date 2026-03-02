@@ -1,0 +1,31 @@
+appId: com.saucelabs.mydemoapp.android
+---
+#step 1: Veriying the review order page 
+- assertVisible: "Review your order"
+
+#step 3: Veriying the given deliver address and payment method
+# step 3: Verifying the given deliver address and payment method
+- assertVisible: ".*${output.thisName}.*"
+- assertVisible: ".*${output.thisAddr1}.*"
+# The .* at the end handles the comma after the city name
+- assertVisible: ".*${output.thisCity}.*"
+- assertVisible: ".*${output.thisCountry}.*"
+- assertVisible: ".*${output.thisZip}.*"
+- scrollUntilVisible:
+    element:
+      id: "com.saucelabs.mydemoapp.android:id/arrivalTV"
+    direction: DOWN
+    timeout: 10000
+# This looks for your card number even if the app puts spaces every 4 digits
+# Replaces every 4th digit with 'that digit + a wildcard'
+- assertVisible: ".*${output.thisCardNumber.split(\"\").join(\"\\\\s?\")}.*"
+- assertVisible: ".*${output.thisExpiry}.*"
+#step 4: clicking the place the order button
+- tapOn: "Place Order"
+
+
+
+
+
+
+

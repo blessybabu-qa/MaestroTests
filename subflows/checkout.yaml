@@ -1,0 +1,51 @@
+appId: com.saucelabs.mydemoapp.android
+---
+# Step 1: Generate random data
+- evalScript: |
+    // Names and Address
+    ${output.thisName = faker.name().fullName()}
+    ${output.thisAddr1 = faker.address().streetAddress()}
+    ${output.thisAddr2 = "Apt " + faker.number().numberBetween(1, 100)}
+    ${output.thisCity = faker.address().city()}
+    ${output.thisZip = faker.address().zipCode()}
+    ${output.thisCountry = faker.address().country()}
+
+
+
+    // Log to terminal to verify it's working
+    console.log("Generating data for: " + output.thisName);
+
+# Step 2: Tiny pause to let the JS engine sync with the UI
+
+# Step 3: Inputting the data using the ${output.variable} syntax
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/fullNameET"
+- inputText: ${output.thisName}
+
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/address1ET"
+- inputText: ${output.thisAddr1}
+
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/address2ET"
+- inputText: ${output.thisAddr2}
+- hideKeyboard
+
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/cityET"
+- inputText: ${output.thisCity}
+- hideKeyboard
+
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/zipET"
+- inputText: ${output.thisZip}
+- hideKeyboard
+
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/countryET"
+- inputText: ${output.thisCountry}
+- hideKeyboard
+
+# Step 4: Continue to Payment
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/paymentBtn"

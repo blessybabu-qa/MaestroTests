@@ -1,0 +1,5 @@
+appId: com.saucelabs.mydemoapp.android
+---
+#step 1: Veriying the payment complete process
+- assertVisible: "Checkout Complete"
+- assertVisible: "Thank you for your order"

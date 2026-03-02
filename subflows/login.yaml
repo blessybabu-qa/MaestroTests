@@ -1,0 +1,20 @@
+appId: com.saucelabs.mydemoapp.android
+---
+# step 1: Giving username
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/nameET"
+- inputText: "bod@example.com"
+# step 2: Giving password
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/passwordET"
+- inputText: 10203040
+- hideKeyboard
+# step 3: Clicking login button
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/loginBtn"
+# step 4: Verification of successful login
+- tapOn:
+    id: "com.saucelabs.mydemoapp.android:id/menuIV" 
+- assertVisible: "Log Out"  
+- tapOn:
+    point: 90%, 50%

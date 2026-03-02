@@ -1,0 +1,14 @@
+# subflows/add_to_cart.yaml
+appId: com.saucelabs.mydemoapp.android
+---
+- assertVisible: "Add to cart"
+# 2. Perform the action
+- tapOn: "Add to cart"
+   
+
+# 3. Verify the action worked (e.g., cart badge shows "1")
+- assertVisible:
+    id: "com.saucelabs.mydemoapp.android:id/cartTV"
+- assertVisible:
+    text: "1"
+    
