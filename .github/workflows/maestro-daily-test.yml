@@ -19,25 +19,16 @@ jobs:
       - name: Run Tests on Android Emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 29
+          api-level: 21
           target: google_apis
-          arch: x86
-          profile: pixel_6
+          arch: armeabi-v7a
+          profile: Nexus 5
+          force-avd-creation: false
+          emulator-options: -no-window -gpu off -no-audio -no-boot-anim
           script: |
             # Wait for emulator to be ready
             echo "Waiting for emulator to boot..."
-            adb wait-for-device
-            sleep 30
-
-            # Wait for system to fully boot
-            for i in {1..60}; do
-              if [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; then
-                echo "Emulator is ready!"
-                break
-              fi
-              echo "Still waiting... ($i/60)"
-              sleep 2
-            done
+            sleep 60
 
             # Download APK
             echo "Downloading APK..."
