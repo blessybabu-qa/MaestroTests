@@ -4,13 +4,14 @@ on:
   push:
     branches: [ main ]
   schedule:
-    # Runs at 01:00 UTC every day
     - cron: '0 1 * * *'
   workflow_dispatch: 
 
 jobs:
   maestro-test:
-    runs-on: macos-latest 
+    runs-on: macos-latest
+    # Added a timeout so the job doesn't run forever if the emulator hangs
+    timeout-minutes: 30 
     
     steps:
       - name: Checkout code
@@ -24,28 +25,34 @@ jobs:
       - name: Run Maestro Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 30
+          # Use API 33 for Pixel 7 stability
+          api-level: 33
           target: google_apis
           arch: arm64-v8a
-          profile: pixel_6
+          profile: pixel_7
           
+          # These flags help the emulator boot in a headless environment
           force-avd-creation: false
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
         
           script: |
-            # 1. Download the Sauce Labs My Demo App APK automatically
+            # 1. Download the Sauce Labs APK
             curl -L "https://github.com/saucelabs/my-demo-app-android/releases/download/2.0.1/mda-2.0.1-22.apk" -o mydemoapp.apk
             
-            # 2. Install it
+            # 2. Give the system 10 seconds to fully stabilize after boot
+            sleep 10
+            
+            # 3. Install the APK
             adb install mydemoapp.apk
             
-            # 3. Run your specific test file
+            # 4. Run your test
             maestro test \
               -e USER_NAME="${{ secrets.USER_NAME }}" \
               -e USER_PWD="${{ secrets.USER_PWD }}" \
               --format junit \
               --output report.xml \
+              --test-output-dir=maestro-artifacts \
               flows/mydemoapp_test.yaml
 
       - name: Upload Test Report & Screenshots
@@ -55,4 +62,4 @@ jobs:
           name: maestro-results
           path: |
             report.xml
-            ~/.maestro/tests/
+            maestro-artifacts/
