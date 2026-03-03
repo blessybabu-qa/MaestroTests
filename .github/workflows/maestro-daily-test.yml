@@ -22,6 +22,14 @@ jobs:
           api-level: 29
           profile: pixel_6
           script: |
+            # Wait for emulator to be ready
+            adb wait-for-device
+            while [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" != "1" ]; do
+              echo "Waiting for emulator to boot..."
+              sleep 2
+            done
+            echo "Emulator is ready!"
+
             # Download APK
             curl -L "https://github.com/saucelabs/my-demo-app-android/releases/download/2.0.1/mda-2.0.1-22.apk" -o myapp.apk
 
