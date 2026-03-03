@@ -1,38 +1,21 @@
-name: Maestro Scheduled UI Tests
-
-on:
-  push:
-    branches: [ main ]
-  schedule:
-    - cron: '0 1 * * *'
-  workflow_dispatch: 
-
-jobs:
-  maestro-test:
-    runs-on: macos-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Maestro
-        run: |
-          curl -Ls "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
-
-      - name: Run Maestro Tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 30
+- name: Run Maestro Tests
+  uses: reactivecircus/android-emulator-runner@v2
+  with:
+        # API 29 is the "Stability King" for CI emulators
+          api-level: 29
           target: google_apis
           arch: arm64-v8a
           profile: pixel_6
           force-avd-creation: false
           disable-animations: true
-          # THE FIX: -gpu swiftshader_indirect bypasses the HVF hardware check
-          # -no-snapshot-load ensures it doesn't try to load a broken saved state
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          # We add -accel off to stop the HVF crash, and keep swiftshader for the GPU
+          emulator-options: >
+            -no-window 
+            -gpu swiftshader_indirect 
+            -no-snapshot 
+            -noaudio 
+            -no-boot-anim 
+            -accel off
           
           script: |
             # 1. Wait for Android to be fully ready
@@ -51,18 +34,18 @@ jobs:
             adb install myapp.apk
             
             # 4. Run your Maestro flow
-            maestro test flows/mydemoapp_test.yaml
-              -e USER_NAME="${{ secrets.USER_NAME }}" \
-              -e USER_PWD="${{ secrets.USER_PWD }}" \
-              --format junit \
-              --output report.xml \
-              flows/mydemoapp_test.yaml
+            maestro test \
+            -e USER_NAME="${{ secrets.USER_NAME }}" \
+            -e USER_PWD="${{ secrets.USER_PWD }}" \
+            --format junit \
+            -output report.xml \
+            flows/mydemoapp_test.yaml
 
-      - name: Upload Test Report & Screenshots
-        if: always() 
-        uses: actions/upload-artifact@v4
-        with:
-          name: maestro-results
-          path: |
-            report.xml
-            ~/.maestro/tests/
+- name: Upload Test Report & Screenshots
+  if: always() 
+  uses: actions/upload-artifact@v4
+  with:
+  name: maestro-results
+  path: |
+    report.xml
+    ~/.maestro/tests/
