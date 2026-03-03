@@ -30,7 +30,8 @@ jobs:
           profile: pixel_6
           force-avd-creation: false
           disable-animations: true
-          # FIX: -gpu swiftshader_indirect handles the 'HVF_UNSUPPORTED' error
+          # THE FIX: -gpu swiftshader_indirect bypasses the HVF hardware check
+          # -no-snapshot-load ensures it doesn't try to load a broken saved state
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           
           script: |
@@ -50,7 +51,7 @@ jobs:
             adb install myapp.apk
             
             # 4. Run your Maestro flow
-            maestro test \
+            maestro test flows/mydemoapp_test.yaml
               -e USER_NAME="${{ secrets.USER_NAME }}" \
               -e USER_PWD="${{ secrets.USER_PWD }}" \
               --format junit \
