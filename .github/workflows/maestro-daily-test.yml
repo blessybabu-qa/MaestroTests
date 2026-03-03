@@ -1,5 +1,4 @@
-with:
-          name: Maestro Scheduled UI Tests
+name: Maestro Scheduled UI Tests
 
 on:
   push:
