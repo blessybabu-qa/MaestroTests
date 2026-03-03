@@ -21,10 +21,10 @@ jobs:
         with:
           api-level: 21
           target: google_apis
-          arch: armeabi-v7a
+          arch: x86_64
           profile: Nexus 5
           force-avd-creation: false
-          emulator-options: -no-window -gpu off -no-audio -no-boot-anim
+          emulator-options: -no-window -gpu off -no-audio -no-boot-anim -accel off
           script: |
             # Wait for emulator to be ready
             echo "Waiting for emulator to boot..."
