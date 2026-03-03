@@ -25,20 +25,30 @@ jobs:
           profile: pixel_6
           script: |
             # Wait for emulator to be ready
+            echo "Waiting for emulator to boot..."
             adb wait-for-device
-            while [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" != "1" ]; do
-              echo "Waiting for emulator to boot..."
+            sleep 30
+
+            # Wait for system to fully boot
+            for i in {1..60}; do
+              if [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; then
+                echo "Emulator is ready!"
+                break
+              fi
+              echo "Still waiting... ($i/60)"
               sleep 2
             done
-            echo "Emulator is ready!"
 
             # Download APK
+            echo "Downloading APK..."
             curl -L "https://github.com/saucelabs/my-demo-app-android/releases/download/2.0.1/mda-2.0.1-22.apk" -o myapp.apk
 
             # Install APK
+            echo "Installing APK..."
             adb install myapp.apk
 
             # Run Maestro tests
+            echo "Running Maestro tests..."
             export PATH="$PATH:$HOME/.maestro/bin"
             maestro test \
               -e USER_NAME="${{ secrets.USER_NAME }}" \
