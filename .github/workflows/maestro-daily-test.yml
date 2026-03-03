@@ -20,15 +20,23 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 21
-          target: google_apis
-          arch: x86_64
+          target: default
+          arch: x86
           profile: Nexus 5
           force-avd-creation: false
-          emulator-options: -no-window -gpu off -no-audio -no-boot-anim -accel off
+          disable-animations: true
+          emulator-options: -no-window -no-audio -no-snapshot -no-boot-anim
           script: |
             # Wait for emulator to be ready
             echo "Waiting for emulator to boot..."
-            sleep 60
+            for i in {1..120}; do
+              if adb shell getprop sys.boot_completed 2>/dev/null | grep -q 1; then
+                echo "Emulator ready after $((i*2)) seconds"
+                break
+              fi
+              echo "Waiting... ($i/120)"
+              sleep 2
+            done
 
             # Download APK
             echo "Downloading APK..."
