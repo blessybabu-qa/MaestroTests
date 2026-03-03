@@ -1,24 +1,68 @@
 with:
+          name: Maestro Scheduled UI Tests
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch: 
+
+jobs:
+  maestro-test:
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Run Maestro Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
           api-level: 30
           target: google_apis
           arch: arm64-v8a
           profile: pixel_6
           force-avd-creation: false
           disable-animations: true
-          # THIS LINE FIXES THE HVF ERROR:
+          # FIX: -gpu swiftshader_indirect handles the 'HVF_UNSUPPORTED' error
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           
           script: |
-            # The wait loop ensures the 'HVF' failure doesn't stop the boot
+            # 1. Wait for Android to be fully ready
             echo "Waiting for Android to boot..."
             adb wait-for-device
             while [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" != "1" ]; do
+              echo "Still booting... sleeping 5s"
               sleep 5
             done
-            
-            # Now install the Sauce App
+            echo "Android is ready!"
+
+            # 2. Download the Sauce Labs APK
             curl -L "https://github.com/saucelabs/my-demo-app-android/releases/download/2.0.1/mda-2.0.1-22.apk" -o myapp.apk
+            
+            # 3. Install the APK
             adb install myapp.apk
             
-            # Run your Maestro flows
-            maestro test flows/mydemoapp_test.yaml
+            # 4. Run your Maestro flow
+            maestro test \
+              -e USER_NAME="${{ secrets.USER_NAME }}" \
+              -e USER_PWD="${{ secrets.USER_PWD }}" \
+              --format junit \
+              --output report.xml \
+              flows/mydemoapp_test.yaml
+
+      - name: Upload Test Report & Screenshots
+        if: always() 
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-results
+          path: |
+            report.xml
+            ~/.maestro/tests/
