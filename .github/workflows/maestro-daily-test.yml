@@ -1,12 +1,7 @@
 name: Maestro Cloud E2E
 
 on:
-  schedule:
-    # 00:00 UTC is 01:00 AM CET (German Standard Time)
-    - cron: '0 0 * * *' 
-  push:
-    branches: [ main ]
-  workflow_dispatch: 
+  workflow_dispatch: # This keeps the manual "Run workflow" button active
 
 jobs:
   maestro-cloud:
@@ -27,7 +22,8 @@ jobs:
           api-key: ${{ secrets.MAESTRO_CLOUD_API_KEY }}
           project-id: ${{ secrets.MAESTRO_PROJECT_ID }}
           app-file: myapp.apk
-          workspace: flows/
+          # Set workspace to '.' to include your 'subflows' folder
+          workspace: . 
           env: |
             USER_NAME=${{ secrets.USER_NAME }}
             USER_PWD=${{ secrets.USER_PWD }}
