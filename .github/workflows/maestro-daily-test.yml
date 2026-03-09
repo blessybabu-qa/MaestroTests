@@ -2,48 +2,37 @@ name: Maestro Cloud E2E
 
 on:
   schedule:
-    - cron: '0 1 * * *' # Runs daily at 1 AM
-  workflow_dispatch:    # Allows manual triggers
+    # 00:00 UTC is 01:00 AM CET (German Standard Time)
+    - cron: '0 0 * * *' 
+  push:
+    branches: [ main ]
+  workflow_dispatch: 
 
 jobs:
   maestro-cloud:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Download APK
+      - name: Download Demo APK
         run: |
           echo "Downloading target APK..."
           curl -L "https://github.com/saucelabs/my-demo-app-android/releases/download/2.0.1/mda-2.0.1-22.apk" -o myapp.apk
 
-      - name: Run Tests on Maestro Cloud
+      - name: Run Maestro Cloud Action
         id: maestro-upload
         uses: mobile-dev-inc/action-maestro-cloud@v2
         with:
           api-key: ${{ secrets.MAESTRO_CLOUD_API_KEY }}
+          project-id: ${{ secrets.MAESTRO_PROJECT_ID }}
           app-file: myapp.apk
           workspace: flows/
-          # Optional: Generate a JUnit report file
-          format: junit
-          output: report.xml
-          # Pass your secrets to the tests
           env: |
             USER_NAME=${{ secrets.USER_NAME }}
             USER_PWD=${{ secrets.USER_PWD }}
 
-      - name: Display Cloud Report Link
-        if: always() # Ensures you get the link even if tests fail
+      - name: Display Report Link
+        if: always()
         run: |
-          echo "------------------------------------------------------------"
-          echo "VIEW FULL REPORT (SCREENSHOTS & VIDEO) HERE:"
-          echo "${{ steps.maestro-upload.outputs.MAESTRO_CLOUD_CONSOLE_URL }}"
-          echo "------------------------------------------------------------"
-
-      - name: Upload JUnit XML Report
-        if: failure() # Only upload the file if the test fails
-        uses: actions/upload-artifact@v4
-        with:
-          name: maestro-junit-report
-          path: report.xml
+          echo "View Results: ${{ steps.maestro-upload.outputs.MAESTRO_CLOUD_CONSOLE_URL }}"
