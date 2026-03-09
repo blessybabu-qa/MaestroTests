@@ -1,47 +1,36 @@
-trigger: none # Manual run only to save trial credits
+name: Maestro Cloud E2E
 
-pool:
-  vmImage: 'ubuntu-latest'
+on:
+  workflow_dispatch: # This keeps your manual "Run workflow" button active
 
-variables:
-- group: maestro-secrets # Links your secure variables from Step 1
+jobs:
+  maestro-cloud:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15 # Automatically cancels if it hangs too long
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-steps:
-- task: Bash@3
-  displayName: '1. Install Maestro CLI'
-  inputs:
-    targetType: 'inline'
-    script: |
-      echo "Installing Maestro..."
-      curl -Ls "https://get.maestro.mobile.dev" | bash
-      # This line is crucial: it adds Maestro to the system PATH for the next steps
-      echo "##vso[task.prependpath]$HOME/.maestro/bin"
+      - name: Download Demo APK
+        run: |
+          echo "Downloading target APK..."
+          curl -L "https://github.com/saucelabs/my-demo-app-android/releases/download/2.0.1/mda-2.0.1-22.apk" -o myapp.apk
 
-- script: |
-    echo "Downloading target APK..."
-    curl -L "https://github.com/saucelabs/my-demo-app-android/releases/download/2.0.1/mda-2.0.1-22.apk" -o myapp.apk
-  displayName: '2. Download Demo APK'
+      - name: Run Maestro Cloud Action
+        id: maestro-upload
+        uses: mobile-dev-inc/action-maestro-cloud@v2
+        with:
+          api-key: ${{ secrets.MAESTRO_CLOUD_API_KEY }}
+          project-id: ${{ secrets.MAESTRO_PROJECT_ID }}
+          app-file: myapp.apk
+          # Using '.' ensures your 'subflows' folder is included in the upload
+          workspace: . 
+          env: |
+            USER_NAME=${{ secrets.USER_NAME }}
+            USER_PWD=${{ secrets.USER_PWD }}
 
-- script: |
-    echo "Starting Maestro Cloud Run..."
-    # Using the CLI directly allows for better error handling in Azure
-    maestro cloud \
-      --api-key $(MAESTRO_CLOUD_API_KEY) \
-      --project-id $(MAESTRO_PROJECT_ID) \
-      --app-file myapp.apk \
-      --flows . \
-      --env USER_NAME=$(USER_NAME) \
-      --env USER_PWD=$(USER_PWD) \
-      --format junit \
-      --output report.xml
-  displayName: '3. Run Maestro Cloud Tests'
-  continueOnError: true # Ensures results are published even if a test fails
-
-- task: PublishTestResults@2
-  displayName: '4. Publish Results to Azure Dashboard'
-  condition: always()
-  inputs:
-    testResultsFormat: 'JUnit'
-    testResultsFiles: 'report.xml'
-    testRunTitle: 'Maestro Mobile E2E Results'
-    failTaskOnFailedTests: true
+      - name: Display Report Link
+        if: always()
+        run: |
+          echo "View Results: ${{ steps.maestro-upload.outputs.MAESTRO_CLOUD_CONSOLE_URL }}"
