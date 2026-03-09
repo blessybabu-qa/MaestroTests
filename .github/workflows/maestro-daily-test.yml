@@ -1,53 +1,49 @@
-name: Maestro Test
+name: Maestro Cloud E2E
 
 on:
   schedule:
-    - cron: '0 1 * * *'
-  workflow_dispatch:
+    - cron: '0 1 * * *' # Runs daily at 1 AM
+  workflow_dispatch:    # Allows manual triggers
 
 jobs:
-  test:
+  maestro-cloud:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Maestro
-        run: curl -Ls "https://get.maestro.mobile/release/latest/maestro-cli" | bash
+      - name: Download APK
+        run: |
+          echo "Downloading target APK..."
+          curl -L "https://github.com/saucelabs/my-demo-app-android/releases/download/2.0.1/mda-2.0.1-22.apk" -o myapp.apk
 
-      - name: Run Tests on Android Emulator
-        uses: reactivecircus/android-emulator-runner@v2
+      - name: Run Tests on Maestro Cloud
+        id: maestro-upload
+        uses: mobile-dev-inc/action-maestro-cloud@v2
         with:
-          api-level: 21
-          arch: x86
-          profile: Nexus 5
-          emulator-options: -no-snapshot -no-window -no-boot-anim
-          disable-animations: true
-          script: |
-            adb shell input keyevent 82
-            sleep 30
+          api-key: ${{ secrets.MAESTRO_CLOUD_API_KEY }}
+          app-file: myapp.apk
+          workspace: flows/
+          # Optional: Generate a JUnit report file
+          format: junit
+          output: report.xml
+          # Pass your secrets to the tests
+          env: |
+            USER_NAME=${{ secrets.USER_NAME }}
+            USER_PWD=${{ secrets.USER_PWD }}
 
-            # Download APK
-            echo "Downloading APK..."
-            curl -L "https://github.com/saucelabs/my-demo-app-android/releases/download/2.0.1/mda-2.0.1-22.apk" -o myapp.apk
+      - name: Display Cloud Report Link
+        if: always() # Ensures you get the link even if tests fail
+        run: |
+          echo "------------------------------------------------------------"
+          echo "VIEW FULL REPORT (SCREENSHOTS & VIDEO) HERE:"
+          echo "${{ steps.maestro-upload.outputs.MAESTRO_CLOUD_CONSOLE_URL }}"
+          echo "------------------------------------------------------------"
 
-            # Install APK
-            echo "Installing APK..."
-            adb install myapp.apk
-
-            # Run Maestro tests
-            echo "Running Maestro tests..."
-            export PATH="$PATH:$HOME/.maestro/bin"
-            maestro test \
-              -e USER_NAME="${{ secrets.USER_NAME }}" \
-              -e USER_PWD="${{ secrets.USER_PWD }}" \
-              flows/sauce_test.yaml
-
-      - name: Upload Screenshots on Failure
-        if: failure()
+      - name: Upload JUnit XML Report
+        if: failure() # Only upload the file if the test fails
         uses: actions/upload-artifact@v4
         with:
-          name: failure-screenshots
-          path: ~/.maestro/
-          retention-days: 7
+          name: maestro-junit-report
+          path: report.xml
