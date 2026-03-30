@@ -1,36 +1,42 @@
-name: Maestro Cloud E2E
+name: Maestro Local E2E
 
 on:
-  workflow_dispatch: # This keeps your manual "Run workflow" button active
+  workflow_dispatch: # Enables your manual "Run workflow" button
+  push:
+    branches: [main, master]
 
 jobs:
-  maestro-cloud:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15 # Automatically cancels if it hangs too long
-    
+  mobile-tests:
+    # IMPORTANT: Ubuntu will fail; you must use macOS for local emulators
+    runs-on: macos-latest 
+    timeout-minutes: 30
+
     steps:
-      - name: Checkout Code
+      - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
-      - name: Download Demo APK
+      - name: 🛠️ Install Maestro CLI
         run: |
-          echo "Downloading target APK..."
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: 📥 Download Demo APK
+        run: |
           curl -L "https://github.com/saucelabs/my-demo-app-android/releases/download/2.0.1/mda-2.0.1-22.apk" -o myapp.apk
 
-      - name: Run Maestro Cloud Action
-        id: maestro-upload
-        uses: mobile-dev-inc/action-maestro-cloud@v2
+      - name: 📱 Run Android Emulator & Tests
+        uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-key: ${{ secrets.MAESTRO_CLOUD_API_KEY }}
-          project-id: ${{ secrets.MAESTRO_PROJECT_ID }}
-          app-file: myapp.apk
-          # Using '.' ensures your 'subflows' folder is included in the upload
-          workspace: . 
-          env: |
-            USER_NAME=${{ secrets.USER_NAME }}
-            USER_PWD=${{ secrets.USER_PWD }}
-
-      - name: Display Report Link
-        if: always()
-        run: |
-          echo "View Results: ${{ steps.maestro-upload.outputs.MAESTRO_CLOUD_CONSOLE_URL }}"
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: Pixel_6
+          script: |
+            # 1. Install the downloaded APK
+            adb install myapp.apk
+            
+            # 2. Run Maestro with your ENV variables
+            # We pass the secrets here so your .yaml flows can use them
+            maestro test . \
+              -e USER_NAME=${{ secrets.USER_NAME }} \
+              -e USER_PWD=${{ secrets.USER_PWD }}
