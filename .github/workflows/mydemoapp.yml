@@ -1,0 +1,42 @@
+name: Maestro Local E2E
+
+on:
+  workflow_dispatch: 
+
+jobs:
+  mobile-tests:
+    runs-on: macos-latest 
+    timeout-minutes: 30
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Install Maestro CLI
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: 📥 Download Demo APK
+        run: |
+          curl -L "https://github.com/saucelabs/my-demo-app-android/releases/download/2.0.1/mda-2.0.1-22.apk" -o myapp.apk
+
+      - name: 📱 Run Android Emulator & Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          # We removed 'profile: Pixel_6' to prevent the "No device found" error
+          script: |
+            # 1. Wait for emulator to fully boot
+            adb wait-for-device
+            
+            # 2. Install the APK
+            adb install myapp.apk
+            
+            # 3. Run Maestro with your ENV variables
+            # Using '.' runs all .yaml files in your root/workspace
+            maestro test . \
+              -e USER_NAME=${{ secrets.USER_NAME }} \
+              -e USER_PWD=${{ secrets.USER_PWD }}
