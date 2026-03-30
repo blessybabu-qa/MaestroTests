@@ -48,7 +48,13 @@ blessybabu-qa-maestrotests/
     ├── maestro-daily-test.yml    # 🚧 Maestro Cloud pipeline (WIP)
     └── mydemoapp.yml             # 🚧 Local emulator pipeline (WIP)
 ```
+## 📱 Automated E2E Demo
+This video demonstrates the full purchase flow, including:
+- **Subflow Architecture:** Modular steps for Launch, Login, and Checkout.
+- **Data Injection:** Using Inline JS to generate unique payment data.
+- **Smart Assertions:** Validating UI states with Regex and visibility checks.
 
+https://github.com/blessybabu-qa/MaestroTests/raw/refs/heads/main/fleetster_test.mp4
 ---
 
 ## 🔄 End-to-End Test Flow
