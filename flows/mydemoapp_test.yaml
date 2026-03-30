@@ -1,11 +1,11 @@
 appId: com.saucelabs.mydemoapp.android
 ---
-- runFlow: subflows/launch.yaml
-- runFlow: subflows/select_random_product.yaml
-- runFlow: subflows/add_to_cart.yaml
-- runFlow: subflows/verify_cart_content.yaml # Final professional verification
-- runFlow: subflows/login.yaml
-- runFlow: subflows/checkout.yaml
-- runFlow: subflows/payment.yaml
-- runFlow: subflows/review_order.yaml
-- runFlow: subflows/checkout_complete.yaml
+- runFlow: ../subflows/launch.yaml
+- runFlow: ../subflows/select_random_product.yaml
+- runFlow: ../subflows/add_to_cart.yaml
+- runFlow: ../subflows/verify_cart_content.yaml
+- runFlow: ../subflows/login.yaml
+- runFlow: ../subflows/checkout.yaml
+- runFlow: ../subflows/payment.yaml
+- runFlow: ../subflows/review_order.yaml
+- runFlow: ../subflows/checkout_complete.yaml
