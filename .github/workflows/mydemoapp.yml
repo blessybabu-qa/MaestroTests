@@ -1,13 +1,10 @@
 name: Maestro Local E2E
 
 on:
-  workflow_dispatch: # Enables your manual "Run workflow" button
-  push:
-    branches: [main, master]
+  workflow_dispatch: 
 
 jobs:
   mobile-tests:
-    # IMPORTANT: Ubuntu will fail; you must use macOS for local emulators
     runs-on: macos-latest 
     timeout-minutes: 30
 
@@ -30,13 +27,16 @@ jobs:
           api-level: 30
           target: google_apis
           arch: x86_64
-          profile: Pixel_6
+          # We removed 'profile: Pixel_6' to prevent the "No device found" error
           script: |
-            # 1. Install the downloaded APK
+            # 1. Wait for emulator to fully boot
+            adb wait-for-device
+            
+            # 2. Install the APK
             adb install myapp.apk
             
-            # 2. Run Maestro with your ENV variables
-            # We pass the secrets here so your .yaml flows can use them
+            # 3. Run Maestro with your ENV variables
+            # Using '.' runs all .yaml files in your root/workspace
             maestro test . \
               -e USER_NAME=${{ secrets.USER_NAME }} \
               -e USER_PWD=${{ secrets.USER_PWD }}
