@@ -9,7 +9,8 @@ appId: com.saucelabs.mydemoapp.android
     ${output.thisCvv = faker.expression("#{numerify '###'}")}
 
     // 3. Generate Expiry (MM/YY)
-    ${output.thisExpiry = ("0" + (Math.floor(Math.random() * 12) + 1)).slice(-2) + "/" + (new Date().getFullYear() + 3).toString().substring(2)}
+    // 3. Generate Expiry (MM/YY) - Guaranteed Future Date
+    ${output.thisExpiry = ("0" + (Math.floor(Math.random() * 12) + 1)).slice(-2) + "/" + (new Date().getFullYear() + 2).toString().substring(2)}
 
 # step 2: Giving the card details
 - tapOn:
@@ -19,6 +20,7 @@ appId: com.saucelabs.mydemoapp.android
 - tapOn:
     id: "com.saucelabs.mydemoapp.android:id/cardNumberET"
 - inputText: ${output.thisCardNumber}
+- hideKeyboard
 
 - tapOn:
     id: "com.saucelabs.mydemoapp.android:id/expirationDateET"
@@ -29,6 +31,7 @@ appId: com.saucelabs.mydemoapp.android
     id: "com.saucelabs.mydemoapp.android:id/securityCodeET"
 - inputText: ${output.thisCvv}
 - hideKeyboard
+
 
 # step 3: Clicking the confirm box of billing address
 - tapOn:
