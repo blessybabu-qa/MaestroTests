@@ -15,6 +15,8 @@ This video demonstrates the complete purchase flow running end-to-end locally, i
 - **Dynamic data injection** — inline JS with Faker generating unique addresses and payment details per run
 - **Smart assertions** — UI state validation using regex patterns and visibility checks
 
+https://github.com/blessybabu-qa/MaestroTests/raw/refs/heads/main/android-automation-demo.mp4
+
 
 
 ---
