@@ -21,10 +21,12 @@ appId: com.saucelabs.mydemoapp.android
 - tapOn:
     id: "com.saucelabs.mydemoapp.android:id/fullNameET"
 - inputText: ${output.thisName}
+- hideKeyboard
 
 - tapOn:
     id: "com.saucelabs.mydemoapp.android:id/address1ET"
 - inputText: ${output.thisAddr1}
+- hideKeyboard
 
 - tapOn:
     id: "com.saucelabs.mydemoapp.android:id/address2ET"

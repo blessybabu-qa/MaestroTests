@@ -16,6 +16,7 @@ appId: com.saucelabs.mydemoapp.android
 - tapOn:
     id: "com.saucelabs.mydemoapp.android:id/nameET"
 - inputText: ${output.thisName} # Using your previously generated name
+- hideKeyboard
 
 - tapOn:
     id: "com.saucelabs.mydemoapp.android:id/cardNumberET"
