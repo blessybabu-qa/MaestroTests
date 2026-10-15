@@ -1,7 +1,9 @@
 # subflows/add_to_cart.yaml
 appId: com.saucelabs.mydemoapp.android
 ---
-- assertVisible: "Add to cart"
+- scrollUntilVisible:
+    element: "Add to cart"
+    direction: DOWN
 # 2. Perform the action
 - tapOn: "Add to cart"
    
