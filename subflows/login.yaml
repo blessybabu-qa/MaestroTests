@@ -12,11 +12,6 @@ appId: com.saucelabs.mydemoapp.android
 # step 3: Clicking login button
 - tapOn:
     id: "com.saucelabs.mydemoapp.android:id/loginBtn"
-# step 4: Verification of successful login
-- tapOn:
-    id: "com.saucelabs.mydemoapp.android:id/menuIV" 
-- scrollUntilVisible:
-    element: "Log Out"
-    direction: DOWN
-- tapOn:
-    point: 90%, 50%
+# step 4: Verification of successful login (app moves on to the checkout form)
+- assertVisible:
+    id: "com.saucelabs.mydemoapp.android:id/fullNameET"
