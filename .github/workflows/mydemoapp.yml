@@ -55,6 +55,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: maestro-results
+          include-hidden-files: true
           path: |
             report.xml
             maestro-debug/
