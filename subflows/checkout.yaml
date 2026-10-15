@@ -38,16 +38,28 @@ appId: com.saucelabs.mydemoapp.android
 - inputText: ${output.thisCity}
 - hideKeyboard
 
+- scrollUntilVisible:
+    element:
+      id: "com.saucelabs.mydemoapp.android:id/zipET"
+    direction: DOWN
 - tapOn:
     id: "com.saucelabs.mydemoapp.android:id/zipET"
 - inputText: ${output.thisZip}
 - hideKeyboard
 
+- scrollUntilVisible:
+    element:
+      id: "com.saucelabs.mydemoapp.android:id/countryET"
+    direction: DOWN
 - tapOn:
     id: "com.saucelabs.mydemoapp.android:id/countryET"
 - inputText: ${output.thisCountry}
 - hideKeyboard
 
 # Step 4: Continue to Payment
+- scrollUntilVisible:
+    element:
+      id: "com.saucelabs.mydemoapp.android:id/paymentBtn"
+    direction: DOWN
 - tapOn:
     id: "com.saucelabs.mydemoapp.android:id/paymentBtn"

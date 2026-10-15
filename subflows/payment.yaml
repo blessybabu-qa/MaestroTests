@@ -40,5 +40,8 @@ appId: com.saucelabs.mydemoapp.android
     checked: false
     optional: true # Prevents failure if already checked
 
-# step 4: Clicking the review order button  
+# step 4: Clicking the review order button
+- scrollUntilVisible:
+    element: "Review Order"
+    direction: DOWN
 - tapOn: "Review Order"
