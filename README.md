@@ -1,8 +1,10 @@
 # 🧪 QA Maestro Tests — My Demo App (Android)
 
+[![Maestro Local E2E](https://github.com/blessybabu-qa/MaestroTests/actions/workflows/mydemoapp.yml/badge.svg)](https://github.com/blessybabu-qa/MaestroTests/actions/workflows/mydemoapp.yml)
+
 A mobile UI test automation project built with [Maestro](https://maestro.mobile.dev/), targeting Sauce Labs' My Demo App (Android). The project covers a complete end-to-end purchase journey, structured with modular subflows for reusability and maintainability.
 
-> ✅ All test flows are verified and running successfully on local device and emulator.
+> ✅ All test flows are verified and running successfully on local device, emulator, and in GitHub Actions CI.
 > A full demo video is included below as proof of execution.
 
 ---
@@ -48,11 +50,13 @@ blessybabu-qa-maestrotests/
 │   ├── review_order.yaml           # Assert all order details before placing
 │   └── checkout_complete.yaml      # Confirm order success screen
 │
+├── config.yaml                     # Workspace config — only flows/* are run as tests
+│
 ├── Manual_Test_Cases.csv           # 25+ manual test cases across all subflows
 │
 └── .github/workflows/
     ├── maestro-daily-test.yml      # Maestro Cloud pipeline (in progress)
-    └── mydemoapp.yml               # Local Android emulator pipeline (in progress)
+    └── mydemoapp.yml               # Android emulator pipeline (passing)
 ```
 
 ---
@@ -91,6 +95,8 @@ Place Order → Checkout Complete ✅
 
 **Regex-based assertions** — the review order step uses pattern matching to validate card number formatting (even when the app inserts spaces), demonstrating more than simple text matching.
 
+**Screen-size resilient steps** — `scrollUntilVisible` and `hideKeyboard` are used before interacting with elements lower on the screen, so the same flow passes on a real phone and on a smaller CI emulator.
+
 **Environment variable management** — credentials are injected at runtime via `-e` flags locally and via GitHub Actions secrets in CI, keeping sensitive data out of source code.
 
 ---
@@ -124,12 +130,18 @@ Uploads the APK and test flows to Maestro Cloud for execution on real devices. T
 
 **Required secrets:** `MAESTRO_CLOUD_API_KEY`, `MAESTRO_PROJECT_ID`, `USER_NAME`, `USER_PWD`
 
-### 2. Local Android Emulator (`mydemoapp.yml`)
-Spins up an Android emulator on macOS via GitHub Actions and runs the full suite with Maestro CLI.
+### 2. Android Emulator (`mydemoapp.yml`) ✅ Passing
+Runs the full E2E flow on an Android emulator inside GitHub Actions. Triggered on every push to `main` and manually via `workflow_dispatch`.
+
+- Runs on `ubuntu-latest` with KVM enabled for hardware-accelerated emulation
+- Java 17 (Temurin) + Maestro CLI
+- Android API 30 emulator (`x86_64`, `google_apis`, Pixel 6 screen size) via `reactivecircus/android-emulator-runner`
+- Runs `flows/mydemoapp_test.yaml` with credentials passed from secrets
+- Uploads a JUnit report (`report.xml`) and Maestro debug output (screenshots, logs) as the `maestro-results` artifact on every run, pass or fail
 
 **Required secrets:** `USER_NAME`, `USER_PWD`
 
-> **Pipeline status:** Both workflows are configured and committed. I'm currently working through environment-specific issues in CI — specifically emulator boot timing and Maestro Cloud API integration. This is an active area of development; resolving it is the next milestone for this project.
+> **Pipeline status:** The Android emulator pipeline is passing end-to-end. Maestro Cloud integration is still in progress.
 
 ---
 
@@ -147,7 +159,7 @@ curl -L "https://github.com/saucelabs/my-demo-app-android/releases/download/2.0.
 # 3. Install on your device or emulator
 adb install myapp.apk
 
-# 4. Run the full E2E flow
+# 4. Run the full E2E flow (or run `maestro test .` — config.yaml limits it to flows/*)
 maestro test flows/mydemoapp_test.yaml \
   -e USER_NAME=bod@example.com \
   -e USER_PWD=10203040
@@ -163,9 +175,11 @@ maestro test flows/mydemoapp_test.yaml \
 - [x] Faker-based dynamic data generation for checkout and payment
 - [x] Environment variable management for credentials
 - [x] GitHub Actions workflow files configured
-- [ ] Resolve CI pipeline issues (emulator boot timing, Maestro Cloud integration)
+- [x] Android emulator CI pipeline passing end-to-end
+- [x] JUnit report and debug screenshots uploaded as CI artifacts
+- [ ] Resolve Maestro Cloud integration
 - [ ] Add negative test scenarios (invalid login, empty fields, payment errors)
-- [ ] Capture screenshots and video artifacts on failure
+- [ ] Record video artifacts on failure
 - [ ] Add tagging for selective test execution
 
 ---
